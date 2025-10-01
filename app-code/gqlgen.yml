@@ -1,0 +1,48 @@
+# app-code/gqlgen.yml
+
+# Путь к GraphQL-схеме. *.graphqls означает, что можно разбить схему на несколько файлов.
+schema:
+  - graphql/*.graphqls
+
+# Путь, куда будет сгенерирован основной исполняемый файл gqlgen.
+exec:
+  filename: graphql/generated/generated.go
+  package: generated
+
+# Путь для сгенерированных моделей, если вы не используете свои собственные.
+# В нашем случае мы будем использовать свои, поэтому этот файл будет содержать только то,
+# что gqlgen не смог сопоставить автоматически.
+model:
+  filename: graphql/generated/models_gen.go
+  package: generated
+
+# Конфигурация файла с резолверами, который мы будем реализовывать вручную.
+resolver:
+  layout: follow-schema
+  dir: graphql
+  package: graphql
+  filename: graphql/resolver.go # Указываем явно, где находится наш главный резолвер
+  type: Resolver # Имя структуры-резолвера в resolver.go
+
+# Эта секция — ключ к использованию наших существующих моделей.
+# autobind говорит gqlgen автоматически искать совпадающие структуры в указанных пакетах.
+autobind:
+  - "witness/models"
+
+# Явное сопоставление типов. Это самая важная часть для нашего проекта.
+models:
+  # Сопоставляем тип 'AuditEvent' из схемы с нашей Go-структурой.
+  AuditEvent:
+    model: witness/models.AuditEvent
+  Actor:
+    model: witness/models.Actor
+  Entity:
+    model: witness/models.Entity
+  Context:
+    model: witness/models.Context
+
+  # Указываем gqlgen, как работать с нашим кастомным скаляром 'Time'.
+  # Мы говорим, что он должен использовать стандартный тип `time.Time` из Go.
+  # gqlgen уже имеет встроенный маршалер для него.
+  Time:
+    model: github.com/99designs/gqlgen/graphql.Time

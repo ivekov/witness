@@ -1,0 +1,50 @@
+# Определяем скаляр для времени
+scalar Time
+
+type AuditEvent {
+    event_id: ID!
+    timestamp: Time!
+    status: String!
+    event_type: String!
+    actor: Actor!
+    entity: Entity!
+    context: Context!
+    details: String # Представляем details как JSON-строку
+}
+
+type Actor {
+    id: ID!
+    type: String!
+    name: String!
+    ip_address: String!
+}
+
+type Entity {
+    id: ID!
+    type: String!
+    name: String!
+}
+
+type Context {
+    source_service: String!
+    trace_id: String!
+    request_id: String!
+}
+
+type AuditEventConnection {
+    events: [AuditEvent!]!
+    total: Int!
+}
+
+# TODO: Добавить input для фильтрации
+input AuditEventFilter {
+    status: String
+    eventType: String
+    actorId: ID
+    entityId: ID
+}
+
+type Query {
+    # Поиск событий с пагинацией и фильтрацией
+    searchEvents(filter: AuditEventFilter, limit: Int = 20, offset: Int = 0): AuditEventConnection!
+}
