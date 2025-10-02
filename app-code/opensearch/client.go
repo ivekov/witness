@@ -91,42 +91,47 @@ func (c *Client) EnsureIndexExists(ctx context.Context) error {
 
 func (c *Client) createIndex(ctx context.Context) error {
 	mapping := `{
-	    "settings": {
-	        "number_of_shards": 1,
-	        "number_of_replicas": 0
-	    },
-	    "mappings": {
-	        "properties": {
-	            "event_id": {"type": "keyword"},
-	            "timestamp": {"type": "date_nanos"},
-	            "status": {"type": "keyword"},
-	            "event_type": {"type": "keyword"},
-	            "actor": {
-	                "properties": {
-	                    "id": {"type": "keyword"},
-	                    "type": {"type": "keyword"},
-	                    "name": {"type": "text"},
-	                    "ip_address": {"type": "ip"}
-	                }
-	            },
-	            "entity": {
-	                "properties": {
-	                    "id": {"type": "keyword"},
-	                    "type": {"type": "keyword"},
-	                    "name": {"type": "text"}
-	                }
-	            },
-	            "context": {
-	                "properties": {
-	                    "source_service": {"type": "keyword"},
-	                    "trace_id": {"type": "keyword"},
-	                    "request_id": {"type": "keyword"}
-	                }
-	            },
-	            "details": {"type": "flattened"}
-	        }
-	    }
-	}`
+        "settings": {
+            "number_of_shards": 1,
+            "number_of_replicas": 0
+        },
+        "mappings": {
+            "properties": {
+                "event_id": {"type": "keyword"},
+                "timestamp": {"type": "date_nanos"},
+                "status": {"type": "keyword"},
+                "event_type": {"type": "keyword"},
+                "actor": {
+                    "properties": {
+                        "id": {"type": "keyword"},
+                        "type": {"type": "keyword"},
+                        "name": {"type": "text"},
+                        "ip_address": {"type": "ip"}
+                    }
+                },
+                "entity": {
+                    "properties": {
+                        "id": {"type": "keyword"},
+                        "type": {"type": "keyword"},
+                        "name": {"type": "text"}
+                    }
+                },
+                "context": {
+                    "properties": {
+                        "source_service": {"type": "keyword"},
+                        "trace_id": {"type": "keyword"},
+                        "request_id": {"type": "keyword"}
+                    }
+                },
+                "security": {
+                    "properties": {
+                        "access_level": {"type": "keyword"}
+                    }
+                },
+                "details": {"type": "flattened"}
+            }
+        }
+    }`
 
 	req := opensearchapi.IndicesCreateRequest{
 		Index: IndexName,

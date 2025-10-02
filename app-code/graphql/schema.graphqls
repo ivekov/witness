@@ -9,7 +9,8 @@ type AuditEvent {
     actor: Actor!
     entity: Entity!
     context: Context!
-    details: String # Представляем details как JSON-строку
+    security: Security
+    details: String
 }
 
 type Actor {
@@ -31,17 +32,21 @@ type Context {
     request_id: String!
 }
 
+type Security {
+    access_level: String!
+}
+
 type AuditEventConnection {
     events: [AuditEvent!]!
     total: Int!
 }
 
-# TODO: Добавить input для фильтрации
 input AuditEventFilter {
     status: String
     eventType: String
     actorId: ID
     entityId: ID
+    securityAccessLevel: String
 }
 
 type Query {
