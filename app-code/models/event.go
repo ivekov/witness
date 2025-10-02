@@ -5,15 +5,15 @@ import "time"
 // AuditEvent представляет одно событие аудита.
 // Теги `json` используются для сериализации/десериализации в Kafka и OpenSearch.
 type AuditEvent struct {
-	EventID   string                 `json:"event_id"`
-	Timestamp time.Time              `json:"timestamp"`
-	Status    string                 `json:"status"`
-	EventType string                 `json:"event_type"`
-	Actor     Actor                  `json:"actor"`
-	Entity    Entity                 `json:"entity"`
-	Context   Context                `json:"context"`
-	Security  *Security              `json:"security,omitempty"` // <--- НОВОЕ ПОЛЕ
-	Details   map[string]interface{} `json:"details,omitempty"`
+	EventID   string         `json:"event_id"`
+	Timestamp time.Time      `json:"timestamp"`
+	Status    string         `json:"status"`
+	EventType string         `json:"event_type"`
+	Actor     Actor          `json:"actor"`
+	Entity    Entity         `json:"entity"`
+	Context   Context        `json:"context"`
+	Security  *Security      `json:"security,omitempty"` // <--- НОВОЕ ПОЛЕ
+	Details   map[string]any `json:"details"`
 }
 
 type Actor struct {
