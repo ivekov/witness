@@ -12,7 +12,8 @@ type AuditEvent struct {
 	Actor     Actor                  `json:"actor"`
 	Entity    Entity                 `json:"entity"`
 	Context   Context                `json:"context"`
-	Details   map[string]interface{} `json:"details"`
+	Security  *Security              `json:"security,omitempty"` // <--- НОВОЕ ПОЛЕ
+	Details   map[string]interface{} `json:"details,omitempty"`
 }
 
 type Actor struct {
@@ -34,16 +35,25 @@ type Context struct {
 	RequestID     string `json:"request_id"`
 }
 
+// Security содержит данные, связанные с безопасностью действия
+type Security struct { // <--- НОВАЯ СТРУКТУРА
+	AccessLevel string `json:"access_level"` // Например, "LOW", "MEDIUM", "HIGH", "CRITICAL"
+	// Можно добавить другие поля, например:
+	// UserRoles   []string `json:"user_roles,omitempty"`
+	// TenantID    string   `json:"tenant_id,omitempty"`
+}
+
 type AuditEventConnection struct {
 	Events []*AuditEvent `json:"events"`
 	Total  int           `json:"total"`
 }
 
 type AuditEventFilter struct {
-	Status    *string `json:"status,omitempty"`
-	EventType *string `json:"eventType,omitempty"`
-	ActorID   *string `json:"actorId,omitempty"`
-	EntityID  *string `json:"entityId,omitempty"`
+	Status              *string `json:"status,omitempty"`
+	EventType           *string `json:"eventType,omitempty"`
+	ActorID             *string `json:"actorId,omitempty"`
+	EntityID            *string `json:"entityId,omitempty"`
+	SecurityAccessLevel *string `json:"securityAccessLevel,omitempty"` // <--- НОВОЕ ПОЛЕ ДЛЯ ФИЛЬТРА
 }
 
 type Query struct {

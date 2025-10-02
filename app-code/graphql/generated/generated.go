@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 		Entity    func(childComplexity int) int
 		EventID   func(childComplexity int) int
 		EventType func(childComplexity int) int
+		Security  func(childComplexity int) int
 		Status    func(childComplexity int) int
 		Timestamp func(childComplexity int) int
 	}
@@ -84,6 +85,10 @@ type ComplexityRoot struct {
 
 	Query struct {
 		SearchEvents func(childComplexity int, filter *models.AuditEventFilter, limit *int, offset *int) int
+	}
+
+	Security struct {
+		AccessLevel func(childComplexity int) int
 	}
 }
 
@@ -174,6 +179,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AuditEvent.EventType(childComplexity), true
+	case "AuditEvent.security":
+		if e.complexity.AuditEvent.Security == nil {
+			break
+		}
+
+		return e.complexity.AuditEvent.Security(childComplexity), true
 	case "AuditEvent.status":
 		if e.complexity.AuditEvent.Status == nil {
 			break
@@ -249,6 +260,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.SearchEvents(childComplexity, args["filter"].(*models.AuditEventFilter), args["limit"].(*int), args["offset"].(*int)), true
+
+	case "Security.access_level":
+		if e.complexity.Security.AccessLevel == nil {
+			break
+		}
+
+		return e.complexity.Security.AccessLevel(childComplexity), true
 
 	}
 	return 0, false
@@ -352,7 +370,8 @@ type AuditEvent {
     actor: Actor!
     entity: Entity!
     context: Context!
-    details: String # Представляем details как JSON-строку
+    security: Security
+    details: String
 }
 
 type Actor {
@@ -374,17 +393,21 @@ type Context {
     request_id: String!
 }
 
+type Security {
+    access_level: String!
+}
+
 type AuditEventConnection {
     events: [AuditEvent!]!
     total: Int!
 }
 
-# TODO: Добавить input для фильтрации
 input AuditEventFilter {
     status: String
     eventType: String
     actorId: ID
     entityId: ID
+    securityAccessLevel: String
 }
 
 type Query {
@@ -827,6 +850,39 @@ func (ec *executionContext) fieldContext_AuditEvent_context(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _AuditEvent_security(ctx context.Context, field graphql.CollectedField, obj *models.AuditEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AuditEvent_security,
+		func(ctx context.Context) (any, error) {
+			return obj.Security, nil
+		},
+		nil,
+		ec.marshalOSecurity2ᚖwitnessᚋmodelsᚐSecurity,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AuditEvent_security(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuditEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "access_level":
+				return ec.fieldContext_Security_access_level(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Security", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AuditEvent_details(ctx context.Context, field graphql.CollectedField, obj *models.AuditEvent) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -894,6 +950,8 @@ func (ec *executionContext) fieldContext_AuditEventConnection_events(_ context.C
 				return ec.fieldContext_AuditEvent_entity(ctx, field)
 			case "context":
 				return ec.fieldContext_AuditEvent_context(ctx, field)
+			case "security":
+				return ec.fieldContext_AuditEvent_security(ctx, field)
 			case "details":
 				return ec.fieldContext_AuditEvent_details(ctx, field)
 			}
@@ -1256,6 +1314,35 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Security_access_level(ctx context.Context, field graphql.CollectedField, obj *models.Security) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Security_access_level,
+		func(ctx context.Context) (any, error) {
+			return obj.AccessLevel, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Security_access_level(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Security",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2714,7 +2801,7 @@ func (ec *executionContext) unmarshalInputAuditEventFilter(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status", "eventType", "actorId", "entityId"}
+	fieldsInOrder := [...]string{"status", "eventType", "actorId", "entityId", "securityAccessLevel"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2749,6 +2836,13 @@ func (ec *executionContext) unmarshalInputAuditEventFilter(ctx context.Context, 
 				return it, err
 			}
 			it.EntityID = data
+		case "securityAccessLevel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("securityAccessLevel"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecurityAccessLevel = data
 		}
 	}
 
@@ -2863,6 +2957,8 @@ func (ec *executionContext) _AuditEvent(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "security":
+			out.Values[i] = ec._AuditEvent_security(ctx, field, obj)
 		case "details":
 			field := field
 
@@ -3110,6 +3206,45 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var securityImplementors = []string{"Security"}
+
+func (ec *executionContext) _Security(ctx context.Context, sel ast.SelectionSet, obj *models.Security) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, securityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Security")
+		case "access_level":
+			out.Values[i] = ec._Security_access_level(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3953,6 +4088,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOSecurity2ᚖwitnessᚋmodelsᚐSecurity(ctx context.Context, sel ast.SelectionSet, v *models.Security) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Security(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
