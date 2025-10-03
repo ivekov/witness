@@ -195,16 +195,12 @@ func (c *Client) IndexEventsBulk(ctx context.Context, events []*models.AuditEven
 		return fmt.Errorf("bulk indexing error: %s, body: %s", res.Status(), string(body))
 	}
 
-	// Опционально: можно проанализировать ответ на наличие ошибок для отдельных документов
 	slog.Info("successfully indexed events in bulk", "count", len(events))
 	return nil
 }
 
 // SearchEvents выполняет поиск событий по заданным фильтрам.
-// В production этот метод нужно будет расширить для поддержки всех полей.
 func (c *Client) SearchEvents(ctx context.Context, filter map[string]interface{}, limit, offset int) ([]*models.AuditEvent, int64, error) {
-	// Эта функция будет сложной, так как нужно динамически строить запрос.
-	// Вот упрощенный пример.
 
 	var query map[string]interface{}
 	// TODO: Динамическое построение запроса на основе фильтра.

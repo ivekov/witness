@@ -30,14 +30,13 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
 
-  # 🔥 НОВЫЙ СЕРВИС: Веб-интерфейс для Kafka
   redpanda-console:
     image: docker.redpanda.com/redpandadata/console:latest
     container_name: redpanda-console
     depends_on:
       - kafka
     ports:
-      - "8081:8080" # Используем порт 8081 на хосте, чтобы не конфликтовать с вашим приложением
+      - "8081:8080" # Используем порт 8081 на хосте, чтобы не конфликтовать с приложением
     networks:
       - witness-net
     environment:
@@ -66,7 +65,6 @@ services:
     volumes:
       - opensearch-data:/usr/share/opensearch/data
 
-  # 🔥 НОВЫЙ СЕРВИС: Веб-интерфейс для OpenSearch
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.11.1
     container_name: opensearch-dashboards
@@ -101,7 +99,6 @@ services:
 volumes:
   opensearch-data:
 
-# 🔥 ДОБАВЛЕНА СЕТЬ для лучшей изоляции и именования хостов
 networks:
   witness-net:
     driver: bridge
