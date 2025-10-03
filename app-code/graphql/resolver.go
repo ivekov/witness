@@ -53,29 +53,22 @@ func (r *queryResolver) SearchEvents(ctx context.Context, filter *models.AuditEv
 	}
 
 	// Вызываем OpenSearch для получения событий.
-	// Он возвращает []*models.AuditEvent, что идеально соответствует
-	// тому, что ожидает generated.AuditEventConnection.Events.
 	events, total, err := r.OSClient.SearchEvents(ctx, filterMap, l, o)
 	if err != nil {
 		slog.Error("failed to search events in OpenSearch", "error", err)
 		return nil, fmt.Errorf("failed to search events: %w", err)
 	}
 
-	// Больше не нужно преобразовывать события вручную,
-	// так как generated.AuditEventConnection уже ожидает []*models.AuditEvent
-	// (см. ваш generated.go и маршалеры там).
 	return &models.AuditEventConnection{
-		Events: events, // Теперь передаем напрямую
+		Events: events, 
 		Total:  int(total),
 	}, nil
 }
 
-// 🔥 НОВОЕ: Структура для реализации SecurityResolver
+// Структура для реализации SecurityResolver
 type securityResolver struct{ *Resolver }
 
-// 🔥 НОВОЕ: Реализация резолвера для поля access_level в Security
-// (По умолчанию gqlgen справится сам, но если бы нужна была кастомная логика,
-// она была бы здесь. Интерфейс требует его наличия.)
+// Реализация резолвера для поля access_level в Security
 func (r *securityResolver) AccessLevel(ctx context.Context, obj *models.Security) (string, error) {
 	return obj.AccessLevel, nil
 }
