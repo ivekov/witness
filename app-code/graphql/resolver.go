@@ -4,6 +4,8 @@ package graphql
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"witness/graphql/generated"
 	"witness/models"
 	"witness/opensearch"
@@ -20,9 +22,26 @@ func (r *Resolver) Query() generated.QueryResolver {
 }
 
 func (r *queryResolver) SearchEvents(ctx context.Context, filter *models.AuditEventFilter, limit *int, offset *int) (*models.AuditEventConnection, error) {
-	// Конвертируем GraphQL-фильтр в карту для OpenSearch
 	filterMap := make(map[string]interface{})
-	// ... логика конвертации
+	// TODO: Реализовать логику конвертации filter *generated.AuditEventFilter в filterMap
+	// Например:
+	if filter != nil {
+		if filter.Status != nil {
+			filterMap["status"] = *filter.Status
+		}
+		if filter.EventType != nil {
+			filterMap["event_type"] = *filter.EventType
+		}
+		if filter.ActorID != nil {
+			filterMap["actor.id"] = *filter.ActorID
+		}
+		if filter.EntityID != nil {
+			filterMap["entity.id"] = *filter.EntityID
+		}
+		if filter.SecurityAccessLevel != nil {
+			filterMap["security.access_level"] = *filter.SecurityAccessLevel
+		}
+	}
 
 	l := 20
 	if limit != nil {
@@ -33,47 +52,23 @@ func (r *queryResolver) SearchEvents(ctx context.Context, filter *models.AuditEv
 		o = *offset
 	}
 
+	// Вызываем OpenSearch для получения событий.
 	events, total, err := r.OSClient.SearchEvents(ctx, filterMap, l, o)
 	if err != nil {
-		return nil, err
-	}
-
-	// Конвертируем модели в GraphQL-типы
-	gqlEvents := make([]*models.AuditEvent, len(events))
-	for i, e := range events {
-		gqlEvents[i] = mapModelToGql(e)
+		slog.Error("failed to search events in OpenSearch", "error", err)
+		return nil, fmt.Errorf("failed to search events: %w", err)
 	}
 
 	return &models.AuditEventConnection{
-		Events: gqlEvents,
+		Events: events, 
 		Total:  int(total),
 	}, nil
 }
 
-func mapModelToGql(e *models.AuditEvent) *models.AuditEvent {
-	// Details конвертируем в JSON-строку для простоты
+// Структура для реализации SecurityResolver
+type securityResolver struct{ *Resolver }
 
-	return &models.AuditEvent{
-		EventID:   e.EventID,
-		Timestamp: e.Timestamp,
-		Status:    e.Status,
-		EventType: e.EventType,
-		Actor: models.Actor{
-			ID:        e.Actor.ID,
-			Type:      e.Actor.Type,
-			Name:      e.Actor.Name,
-			IPAddress: e.Actor.IPAddress,
-		},
-		Entity: models.Entity{
-			ID:   e.Entity.ID,
-			Type: e.Entity.Type,
-			Name: e.Entity.Name,
-		},
-		Context: models.Context{
-			SourceService: e.Context.SourceService,
-			TraceID:       e.Context.TraceID,
-			RequestID:     e.Context.RequestID,
-		},
-		Details: e.Details,
-	}
+// Реализация резолвера для поля access_level в Security
+func (r *securityResolver) AccessLevel(ctx context.Context, obj *models.Security) (string, error) {
+	return obj.AccessLevel, nil
 }
